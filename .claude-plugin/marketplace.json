@@ -1,0 +1,17 @@
+{
+  "name": "jj-spr-claude-plugin",
+  "description": "Skills for Jujutsu + SPR stacked PR workflows on GitHub",
+  "owner": {
+    "name": "Emanuele Porcu"
+  },
+  "plugins": [
+    {
+      "name": "jj-spr-claude-plugin",
+      "description": "Skills and slash commands for the full jj + SPR lifecycle: init, stacked PRs, amend-update, landing, and stack reorganization",
+      "version": "0.1.0",
+      "source": "./",
+      "category": "workflow",
+      "tags": ["jujutsu", "jj", "spr", "stacked-prs", "github", "pull-requests"]
+    }
+  ]
+}
