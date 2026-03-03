@@ -1,6 +1,10 @@
-# jj-spr-workflow
+# jj-spr-claude-plugin
 
-A [Claude Code plugin](https://docs.anthropic.com/en/docs/claude-code) that teaches Claude how to use [jj SPR](https://github.com/eporcu/jj-spr) for GitHub pull request management with [Jujutsu](https://github.com/jj-vcs/jj).
+A [Claude Code plugin](https://docs.anthropic.com/en/docs/claude-code) that teaches Claude how to use [jj SPR](https://github.com/LucioFranco/jj-spr) for GitHub pull request management with [Jujutsu](https://github.com/jj-vcs/jj).
+
+## Credits
+
+[jj SPR](https://github.com/LucioFranco/jj-spr) is created by [Lucio Franco](https://github.com/LucioFranco). This plugin provides Claude Code skills for working with jj SPR — it does not bundle or modify the tool itself.
 
 ## What This Does
 
@@ -15,15 +19,13 @@ Provides skills and slash commands for the full jj + SPR lifecycle:
 ## Install
 
 ```bash
-claude plugin add /path/to/jj-spr-workflow
+claude --plugin-dir /path/to/jj-spr-claude-plugin
 ```
-
-Or add to your project's `.claude/plugins.json`.
 
 ## Prerequisites
 
 - [jj](https://github.com/jj-vcs/jj) installed and in PATH
-- [jj-spr](https://github.com/eporcu/jj-spr) installed and in PATH
+- [jj-spr](https://github.com/LucioFranco/jj-spr) installed and in PATH
 - A colocated repository (both `.jj/` and `.git/` directories)
 - GitHub personal access token with `repo` scope
 

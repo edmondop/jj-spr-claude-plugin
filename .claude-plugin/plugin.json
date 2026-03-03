@@ -1,5 +1,5 @@
 {
-  "name": "jj-spr-workflow",
+  "name": "jj-spr-claude-plugin",
   "version": "0.1.0",
   "description": "Skills for Jujutsu + SPR stacked PR workflows on GitHub",
   "keywords": ["jujutsu", "jj", "spr", "stacked-prs", "github"],
