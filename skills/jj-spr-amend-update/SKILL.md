@@ -5,11 +5,47 @@ description: Use when amending a jj change and updating its associated PR. Trigg
 
 # jj SPR Amend & Update
 
+## Workspace Detection (MUST check first)
+
+**Before running ANY SPR command, check if you're in a jj workspace.**
+
+```bash
+if [ -f .jj/repo ]; then
+  MAIN_REPO=$(dirname "$(dirname "$(cat .jj/repo)")")
+  cd "$MAIN_REPO"
+fi
+```
+
+SPR requires `.git/` which only exists in the main colocated repo, not in
+workspaces. All `jj spr` commands must run from the main repo.
+
 ## Overview
 
 The core day-to-day cycle: modify a jj change locally, then update its PR on
 GitHub. This covers addressing review feedback, fixing bugs in open PRs, and
 any post-creation modification.
+
+## CRITICAL: Preserving the `Pull Request:` URL
+
+**`jj describe -m "..."` replaces the ENTIRE commit message.** If the change
+already has a PR (created by `jj spr diff`), a blind `jj describe` wipes
+the `Pull Request:` tracking URL and causes SPR to create a duplicate PR.
+
+**Before ANY `jj describe` on a change that has a PR:**
+
+```bash
+# 1. Read current description to check for Pull Request: line
+jj log -r <change-id> --no-graph -T 'description'
+
+# 2. Include the Pull Request: line at the bottom of the new message
+jj describe -r <change-id> -m 'Updated summary
+
+Pull Request: https://github.com/org/repo/pull/12345'
+```
+
+**This applies every time you touch a commit message** — whether adding a
+description, fixing a typo, or appending a section. Read first, preserve
+the URL, always.
 
 ## The Amend-Update Loop
 
@@ -123,3 +159,6 @@ Working bottom-up prevents redundant rebases.
 - **Using `jj squash` instead of `jj edit`** — `jj edit` modifies in place,
   `jj squash` merges changes from a child into a parent. For the
   amend-update loop, `jj edit` is what you want.
+- **Using `jj describe -m "..."` without preserving the `Pull Request:`
+  URL** — wipes SPR's tracking URL and causes duplicate PRs on next
+  `jj spr diff`. Always read the current description first.

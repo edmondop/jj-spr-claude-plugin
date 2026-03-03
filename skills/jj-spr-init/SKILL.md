@@ -9,6 +9,35 @@ description: Use when setting up SPR in a Jujutsu repository for the first time.
 
 Set up a Jujutsu repository to use SPR for GitHub pull request management. This skill guides the full initialization: prerequisites, token setup, config verification, and connectivity test.
 
+## Workspace Detection (MUST check first)
+
+**Before running ANY SPR command, check if you're in a jj workspace.**
+
+A jj workspace has `.jj/` but NO `.git/`. SPR requires `.git/` and will
+fail silently or with confusing errors in a workspace.
+
+```bash
+# Check: is .jj/repo a FILE (workspace) or a DIRECTORY (main repo)?
+if [ -f .jj/repo ]; then
+  echo "IN WORKSPACE — read .jj/repo for main repo path"
+  cat .jj/repo
+else
+  echo "IN MAIN REPO"
+fi
+```
+
+**If `.jj/repo` is a file:** You're in a workspace. The file contains the
+path to the main repo's `.jj/repo`. Derive the main repo root:
+
+```bash
+# .jj/repo contains e.g. /Users/you/code/myproject/.jj/repo
+# The main repo root is two directories up from that path
+MAIN_REPO=$(dirname "$(dirname "$(cat .jj/repo)")")
+cd "$MAIN_REPO"
+```
+
+**All SPR commands must run from the main colocated repo, not a workspace.**
+
 ## Prerequisites Check
 
 Before running `jj spr init`, verify all prerequisites:

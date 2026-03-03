@@ -5,6 +5,20 @@ description: Use when reorganizing a jj change stack that has existing PRs. Trig
 
 # jj SPR Stack Reorganization
 
+## Workspace Detection (MUST check first)
+
+**Before running ANY SPR command, check if you're in a jj workspace.**
+
+```bash
+if [ -f .jj/repo ]; then
+  MAIN_REPO=$(dirname "$(dirname "$(cat .jj/repo)")")
+  cd "$MAIN_REPO"
+fi
+```
+
+SPR requires `.git/` which only exists in the main colocated repo, not in
+workspaces. All `jj spr` commands must run from the main repo.
+
 ## Overview
 
 Reorganizing a stack (rebase, squash, split, reorder) when PRs already exist
@@ -39,22 +53,37 @@ gh pr close <number-2> --delete-branch
 
 ## Step 2: Strip Stale `Pull Request:` URLs
 
-For every commit in the stack, remove the `Pull Request:` line from the
-commit message:
+**A single leftover URL will cause SPR to try to update a closed PR.**
+
+Use this loop to strip all `Pull Request:` lines from a set of changes:
 
 ```bash
-# For each change in the stack:
-jj desc <change-id> -m "<message without Pull Request: line>"
+for c in <change-id-1> <change-id-2> ...; do
+  desc=$(jj log --no-graph -r "$c" -T 'description')
+  clean=$(echo "$desc" | grep -v 'Pull Request:' | sed '/^$/N;/^\n$/d')
+  echo "--- $c ---"
+  echo "Before: $(echo "$desc" | grep 'Pull Request:' || echo '(none)')"
+  jj desc -r "$c" -m "$clean"
+  echo
+done
 ```
 
-**Check every commit.** A single leftover URL will cause SPR to try to
-update a closed PR, resulting in errors.
+**What this does:**
+1. Reads the current description for each change
+2. Removes lines containing `Pull Request:`
+3. Collapses doubled blank lines left behind
+4. Rewrites the description
+5. Prints before/after for verification
 
-To see which commits have URLs:
+To get the list of change IDs in the stack:
 
 ```bash
-jj log -T 'change_id ++ " " ++ description'
+jj log -r 'ancestors(@, 20) & ~ancestors(trunk(), 1)' \
+  -T 'change_id.short() ++ "\n"' --no-graph
 ```
+
+**Note:** `jj desc` works from workspaces — no need to `cd` to the main
+repo for this step. Only `jj spr` commands require `.git/`.
 
 ## Step 3: Perform the Reorganization
 

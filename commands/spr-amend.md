@@ -9,6 +9,9 @@ Modify an existing jj change and update its associated GitHub PR.
 
 ## Instructions
 
+**First:** Check if you're in a jj workspace (`.jj/repo` is a file, not a
+directory). If so, `cd` to the main colocated repo before proceeding.
+
 Use the `jj-spr-amend-update` skill to guide the amend-update cycle.
 
 1. Ask the user which change to modify (or infer from context)

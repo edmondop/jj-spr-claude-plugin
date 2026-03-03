@@ -10,6 +10,9 @@ already exist.
 
 ## Instructions
 
+**First:** Check if you're in a jj workspace (`.jj/repo` is a file, not a
+directory). If so, `cd` to the main colocated repo before proceeding.
+
 Use the `jj-spr-reorganize` skill. This is the most dangerous operation —
 follow the skill exactly.
 
