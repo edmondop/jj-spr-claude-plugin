@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+#
+# jj-stack-hud — outputs the jj change stack as JSON for claude-hud --extra-cmd
+#
+# Usage:
+#   --extra-cmd="path/to/jj-stack-hud"
+#
+# Config env vars:
+#   JJ_HUD_DEPTH   Number of changes above/below @ to show (default: 2)
+#   JJ_HUD_LAYOUT  "horizontal" or "vertical" (default: horizontal)
+#
+# Output format (for claude-hud extra-cmd protocol):
+#   { "lines": ["jj: ↓ fix-auth → ↓ add-tests → @ current → ↑ refactor"] }
+
+set -euo pipefail
+
+DEPTH="${JJ_HUD_DEPTH:-2}"
+LAYOUT="${JJ_HUD_LAYOUT:-horizontal}"
+
+# Field separator unlikely to appear in descriptions
+SEP=$'\x1f'
+
+# --- helpers (defined early so on-trunk fallback can use them) ---
+
+not_jj_repo() {
+  printf '{"lines": []}\n'
+  exit 0
+}
+
+escape_json_string() {
+  printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/	/\\t/g'
+}
+
+reverse_lines() {
+  tail -r 2>/dev/null <<< "$1" || tac 2>/dev/null <<< "$1" || echo "$1"
+}
+
+# --- detect jj repo ---
+
+[ -d ".jj" ] || not_jj_repo
+command -v jj >/dev/null 2>&1 || not_jj_repo
+
+SPAN=$((DEPTH + 1))
+
+# Use unit separator as delimiter — avoids sed/regex parsing entirely
+# Fields: marker, change_id, description
+JJ_TEMPLATE="if(current_working_copy, \"@\", \"-\") ++ \"${SEP}\" ++ change_id.short(8) ++ \"${SEP}\" ++ description.first_line() ++ \"\n\""
+REVSET="(ancestors(@, ${SPAN}) | descendants(@, ${SPAN})) & trunk().."
+
+RAW=$(jj log --no-graph -r "$REVSET" -T "$JJ_TEMPLATE" 2>/dev/null) || not_jj_repo
+
+# If no changes off trunk, show @ with "on trunk" indicator
+if [ -z "$RAW" ]; then
+  CID=$(jj log --no-graph -r "@" -T 'change_id.short(4)' 2>/dev/null) || not_jj_repo
+  printf '{"lines": ["jj: @ %s (on trunk)"]}\n' "$CID"
+  exit 0
+fi
+
+# --- formatters ---
+
+format_horizontal() {
+  local reversed
+  reversed=$(reverse_lines "$RAW")
+
+  local parts=()
+  local found_current=false
+
+  while IFS="$SEP" read -r marker cid desc; do
+    [ -z "$marker" ] && continue
+    desc="${desc:0:30}"
+    [ -z "$desc" ] && desc="(empty)"
+    cid="${cid:0:4}"
+
+    local prefix
+    if [ "$marker" = "@" ]; then
+      prefix="@"
+      found_current=true
+    elif [ "$found_current" = true ]; then
+      prefix="↑"
+    else
+      prefix="↓"
+    fi
+
+    parts+=("${prefix} ${cid} ${desc}")
+  done <<< "$reversed"
+
+  local result="${parts[0]}"
+  for ((i=1; i<${#parts[@]}; i++)); do
+    result="${result} → ${parts[$i]}"
+  done
+  echo "$result"
+}
+
+format_vertical() {
+  local lines=()
+  local found_current=false
+
+  while IFS="$SEP" read -r marker cid desc; do
+    [ -z "$marker" ] && continue
+    desc="${desc:0:40}"
+    [ -z "$desc" ] && desc="(empty)"
+    cid="${cid:0:4}"
+
+    if [ "$marker" = "@" ]; then
+      lines+=("  @ ${cid} ${desc}")
+      found_current=true
+    elif [ "$found_current" = false ]; then
+      lines+=("  ↑ ${cid} ${desc}")
+    else
+      lines+=("  ↓ ${cid} ${desc}")
+    fi
+  done <<< "$RAW"
+
+  printf '%s\n' "${lines[@]}"
+}
+
+# --- build JSON output ---
+
+build_output() {
+  local json_lines=""
+
+  if [ "$LAYOUT" = "vertical" ]; then
+    while IFS= read -r fline; do
+      [ -z "$fline" ] && continue
+      local escaped
+      escaped=$(escape_json_string "$fline")
+      if [ -n "$json_lines" ]; then
+        json_lines="${json_lines}, \"${escaped}\""
+      else
+        json_lines="\"jj: ${escaped}\""
+      fi
+    done < <(format_vertical)
+  else
+    local line
+    line=$(format_horizontal)
+    local escaped
+    escaped=$(escape_json_string "$line")
+    json_lines="\"jj: ${escaped}\""
+  fi
+
+  printf '{"lines": [%s]}\n' "$json_lines"
+}
+
+build_output

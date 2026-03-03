@@ -1,0 +1,7 @@
+{
+  "name": "jj-claude-plugin",
+  "version": "0.2.0",
+  "description": "Claude Code plugin for Jujutsu — HUD status line, jj workflows, and optional SPR stacked PR support",
+  "keywords": ["jujutsu", "jj", "hud", "status-line", "spr", "stacked-prs", "github"],
+  "license": "MIT"
+}

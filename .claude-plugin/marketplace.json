@@ -1,0 +1,17 @@
+{
+  "name": "jj-claude-plugin",
+  "description": "Claude Code plugin for Jujutsu — HUD status line, jj workflows, and optional SPR stacked PR support",
+  "owner": {
+    "name": "Edmondo Porcu"
+  },
+  "plugins": [
+    {
+      "name": "jj-claude-plugin",
+      "description": "Jujutsu HUD status line for claude-hud, plus skills and slash commands for optional jj-spr stacked PR workflows",
+      "version": "0.2.0",
+      "source": "./",
+      "category": "workflow",
+      "tags": ["jujutsu", "jj", "hud", "status-line", "spr", "stacked-prs", "github"]
+    }
+  ]
+}
