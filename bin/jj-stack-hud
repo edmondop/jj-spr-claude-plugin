@@ -67,7 +67,7 @@ format_horizontal() {
 
   while IFS="$SEP" read -r marker cid desc; do
     [ -z "$marker" ] && continue
-    desc="${desc:0:30}"
+    desc="${desc:0:150}"
     [ -z "$desc" ] && desc="(empty)"
     cid="${cid:0:4}"
 
@@ -97,7 +97,7 @@ format_vertical() {
 
   while IFS="$SEP" read -r marker cid desc; do
     [ -z "$marker" ] && continue
-    desc="${desc:0:40}"
+    desc="${desc:0:150}"
     [ -z "$desc" ] && desc="(empty)"
     cid="${cid:0:4}"
 
